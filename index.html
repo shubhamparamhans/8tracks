@@ -1,0 +1,218 @@
+<html>
+<head>
+<title>8tracks</title>
+<link href='http://fonts.googleapis.com/css?family=Julius+Sans+One' rel='stylesheet' type='text/css'>
+<style>
+body{
+margin:0px;
+}
+#srchTrck{
+text-align:center;
+}
+#srchBar{
+text-align:center;
+margin-top:80px;
+border-radius:5px 5px 5px 5px;border-color:#dd5522;border-width:2px;font-size:25px;font-family:'Open Sans';
+}
+#srchTrckBar{
+text-align:center;
+margin-top:80px;
+border-radius:5px 5px 5px 5px;border-color:#dd5522;border-width:2px;font-size:25px;font-family:'Open Sans';
+}
+#srchBtn{
+text-align:center;
+margin-top:80px;
+border-radius:5px 5px 5px 5px;border-color:#dd5522;border-width:2px;font-size:25px;font-family:'Open Sans';background:#f6f6f6;color:#dd5522;
+}
+#srchTrcksBtn{
+text-align:center;
+margin-top:80px;
+border-radius:5px 5px 5px 5px;border-color:#dd5522;border-width:2px;font-size:25px;font-family:'Open Sans';background:#f6f6f6;color:#dd5522;
+}
+#srchResults{
+padding:20px;
+margin-top:30px;
+background:#f1f1f1;color:#3c3c3c;font-family:'Open Sans';
+}
+#returnedTracks{
+	padding:20px;
+	margin-top:30px;
+	background:#f1f1f1;color:#3c3c3c;font-family:'Open Sans';
+}
+a{
+	text-decoration:none;
+}
+a:hover{
+	color:RED;
+}
+.mixes_honey:hover{
+color:#3399ff;
+}
+#waiting_background{
+	position:fixed;
+	width:100%;
+	height:100%;
+	z-index:5;
+	background:#3f3f3f;
+	opacity:0.5;
+	visibility:hidden;
+}
+#yoyo{
+	top:200px;left:400px;
+	position:fixed;
+	width:600px;
+	height:500px;
+	z-index:6;
+	color:white;
+	font-family:"Open Sans";
+	font-size:56px;
+	text-align:center;
+	visibility:hidden;
+}
+#adios{
+	background:#dd0000;
+	color:white;
+	font-family: 'Julius Sans One', sans-serif;
+	font-size:60px;box-shadow:#3f3f3f 0 0 10px;font-size:72px;
+}
+#adios_details{
+	background:#3f3f3f;
+	width:500px;margin:10px;
+	color:#f6f6f6;
+	font-family:'Open Sans';
+	text-align:left;
+	border-radius:10px 10px 10px 10px;font-size:18px;
+	padding:10px;
+}
+</style>
+
+<script src="jquery.js"></script>
+<script>
+$(document).ready(function(){
+	function show_waiting(){
+		$('#waiting_background').css({"visibility":"visible"});
+		$('#yoyo').css({"visibility":"visible"});
+	}
+	function hide_waiting(){
+			$('#waiting_background').css({"visibility":"hidden"});
+			$('#yoyo').css({"visibility":"hidden"});
+	}
+	var play_token_is;
+		var getTracksUrl;
+	$("#srchBar").focus();
+	function findTheMix(){
+	show_waiting();
+	$('#srchResults').empty();
+	$.getJSON('http://8tracks.com/mixes.json',
+		{
+		api_key:'8c65f1da78d13e2e273d2f2f2c579af0c55ff851' ,
+		q:document.getElementById('srchBar').value,
+		
+		},
+		function (data){
+		$('#srchResults').append("<br>RETURN MIXES: "+data.mixes.length+"<br>");
+		for(i=0;i<data.mixes.length;i++){
+			$('#srchResults').append("<a href='#' id='"+data.mixes[i].id+"' >"+data.mixes[i].name+"</a> "+data.mixes[i].id+" "+data.mixes[i].description+"<br><img src='"+data.mixes[i].cover_urls.sq56+"'><br>");
+		}
+		
+		}).done(function(){hide_waiting();find_tracks_of_the_mix();});
+		
+		
+	}
+	$('#srchForm').submit(function(){
+		
+		findTheMix();return false;
+	});
+	$('#srchBtn').click(function(){	
+		
+	});
+	$('#srchTrckForm').submit(function(){
+		
+		show_waiting();
+		$('#returnedTracks').empty();
+		var track_id_is_this=document.getElementById('srchTrckBar').value;
+		$.getJSON('https://8tracks.com/sets/new.json',
+		{
+		api_key:'8c65f1da78d13e2e273d2f2f2c579af0c55ff851'
+		},
+		function (data2,getTracksUrl){
+			play_token_is=data2.play_token;
+			getTracksUrl="http://8tracks.com/sets/"+play_token_is+"/play.json";
+			//alert(play_token_is+" "+getTracksUrl);
+			$.getJSON("http://8tracks.com/sets/"+data2.play_token+"/play.json",
+		{
+		mix_id:track_id_is_this,
+		api_key:"8c65f1da78d13e2e273d2f2f2c579af0c55ff851",
+		},
+		function (data3){
+			$('#returnedTracks').append("<a href='"+data3.set.track.url+"' target='_blank' >"+data3.set.track.name+"</a> by "+data3.set.track.performer+" in "+data3.set.track.release_name+"<br>");
+			//$('#returnedTracks').append("<div id='more_tracks'>false</div>");
+			{
+				var more_is_there=true;
+				//var is_more_there=document.getElementById('more_tracks').value;
+			//	alert(is_more_there);
+			i=0;k="false";
+			doin_something(data2.play_token,track_id_is_this,"8c65f1da78d13e2e273d2f2f2c579af0c55ff851",data3.set.track.name);
+				
+			
+			}
+		});
+		}).done(function(){hide_waiting();});
+		
+		
+		return false;
+	});
+	function doin_something(i_play_token,i_mix_id,i_api_key,i_last_track){
+		
+			$.getJSON("http://8tracks.com/sets/"+i_play_token+"/next.json",
+			{
+				mix_id:i_mix_id,
+				api_key:i_api_key,
+			},function(_data){
+				$('#returnedTracks').append("<a href='"+_data.set.track.url+"' target='_blank' >"+_data.set.track.name+"</a> by "+_data.set.track.performer+" in "+_data.set.track.release_name+"<br>");
+				if(!_data.set.at_last_track && i_last_track!=_data.set.track.name )	doin_something(i_play_token,i_mix_id,i_api_key,_data.set.track.name);
+			});
+	
+	}
+	function find_tracks_of_the_mix(){
+	$('.tracks_download').click(function(){alert(this.id);console.log("harka");});
+	}
+	
+});
+
+</script>
+</head>
+<body>
+<div id="waiting_background"></div>
+<div id="yoyo">PLEASE WAIT WHILE I DRAW YOUR STUFF...</div>
+<div id="adios">8tracks downloader</div>
+<div id="adios_details">Search for the mix, then copy the id into lower search box.</div>
+
+<div id='srchTrck'>
+<form id='srchForm'>
+<input type="text" placeholder='ENTER THE NAME' size=60 id='srchBar'>
+<input type='submit' value='GO' id='srchBtn'>
+</form>
+</div>
+<div id='srchResults'>
+</div>
+<div id='mixTrck'>
+<center>
+<form id='srchTrckForm'>
+<input type="text" placeholder='ENTER ID' size=20 id='srchTrckBar'>
+<input type='submit' value='GO' id='srchTrcksBtn'>
+</div>
+</center>
+<div id="returnedTracks">
+
+</div>
+</body>
+
+<script>
+$(document).ready(function(){
+$('.mixes_honey').click(function(){
+alert('hahah');
+	});
+	});
+</script>
+</html>
